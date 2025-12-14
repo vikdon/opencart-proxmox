@@ -74,6 +74,7 @@ install_script() {
   fi
 }
 
+echo "[DEBUG] build_container description"
 start build_container description
 
 msg_ok "Completed Successfully!\n"
