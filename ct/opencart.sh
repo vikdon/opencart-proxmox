@@ -74,8 +74,13 @@ install_script() {
   fi
 }
 
-echo "[DEBUG] build_container description"
-start build_container description
+DEBUG_STEPS=(build_container description)
+
+echo "[DEBUG] steps: ${DEBUG_STEPS[*]}"
+echo "[DEBUG] step types: build_container=$(type -t build_container) description=$(type -t description)"
+
+start "${DEBUG_STEPS[@]}"
+
 
 msg_ok "Completed Successfully!\n"
 echo -e "${CREATING}${GN} ${APP} setup has been successfully initialized!${CL}"
