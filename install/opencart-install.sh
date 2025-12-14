@@ -1,17 +1,24 @@
 #!/usr/bin/env bash
-
-# Copyright (c) 2021-2025 community-scripts ORG | vikdon
-# Author: vikdon
-# License: MIT | https://github.com/community-scripts/ProxmoxVE/raw/main/LICENSE
+# OpenCart install script (runs inside the LXC)
 # Source: https://github.com/opencart/opencart
+# License: MIT
 
 set -Eeuo pipefail
 
-# Якщо FUNCTIONS_FILE_PATH не передали (поза build.func), підтягуємо install.func самі
+# --- TRACE (debug) ---
+TRACE="${TRACE:-1}"
+if [[ "${TRACE}" == "1" ]]; then
+  export PS4='+ [TRACE] ${BASH_SOURCE##*/}:${LINENO}:${FUNCNAME[0]}(): '
+  set -x
+fi
+# --- /TRACE ---
+
+# If FUNCTIONS_FILE_PATH not provided by build.func, fetch install.func
 if [[ -z "${FUNCTIONS_FILE_PATH:-}" ]]; then
   FUNCTIONS_FILE_PATH="$(curl -fsSL https://git.community-scripts.org/community-scripts/ProxmoxVE/raw/branch/main/misc/install.func)"
 fi
 
+# shellcheck disable=SC1091
 source /dev/stdin <<<"$FUNCTIONS_FILE_PATH"
 
 color
@@ -26,7 +33,7 @@ update_os
 # -------------------------
 OC_VERSION="${OC_VERSION:-4.1.0.3}"
 
-# PHP: безпечний дефолт для OpenCart 4.x
+# PHP
 PHP_VERSION="${PHP_VERSION:-8.2}"
 PHP_FPM="${PHP_FPM:-YES}"
 PHP_APACHE="${PHP_APACHE:-YES}"
@@ -40,6 +47,10 @@ PHP_MAX_EXECUTION_TIME="${PHP_MAX_EXECUTION_TIME:-300}"
 MARIADB_DB_NAME="${MARIADB_DB_NAME:-opencart_db}"
 MARIADB_DB_USER="${MARIADB_DB_USER:-opencart}"
 
+msg_info "Installing prerequisites"
+$STD apt-get install -y curl ca-certificates unzip
+msg_ok "Prerequisites installed"
+
 msg_info "Installing PHP/Apache stack"
 PHP_VERSION="${PHP_VERSION}" \
 PHP_FPM="${PHP_FPM}" \
@@ -52,12 +63,23 @@ PHP_MAX_EXECUTION_TIME="${PHP_MAX_EXECUTION_TIME}" \
 setup_php
 msg_ok "PHP/Apache stack installed"
 
+# Ensure common OpenCart PHP extensions (safe to run even if some are already present)
+msg_info "Installing OpenCart PHP extensions"
+$STD apt-get install -y \
+  "php${PHP_VERSION}-curl" \
+  "php${PHP_VERSION}-gd" \
+  "php${PHP_VERSION}-intl" \
+  "php${PHP_VERSION}-mbstring" \
+  "php${PHP_VERSION}-xml" \
+  "php${PHP_VERSION}-zip"
+msg_ok "PHP extensions installed"
+
 msg_info "Installing MariaDB"
 setup_mariadb
 MARIADB_DB_NAME="${MARIADB_DB_NAME}" MARIADB_DB_USER="${MARIADB_DB_USER}" setup_mariadb_db
 msg_ok "MariaDB installed and database prepared"
 
-# Зберігаємо креденшали (потрібні для web-installer)
+# Save DB creds for web installer
 cat >/root/.opencart_db_credentials <<EOF
 Host: localhost
 Database: ${MARIADB_DB_NAME}
@@ -86,7 +108,7 @@ fi
 mkdir -p /var/www/html/opencart
 cp -a "${SRC_DIR}/." /var/www/html/opencart/
 
-# Підготовка конфігів для інсталятора
+# Prepare configs for web installer
 if [[ -f /var/www/html/opencart/config-dist.php && ! -f /var/www/html/opencart/config.php ]]; then
   cp /var/www/html/opencart/config-dist.php /var/www/html/opencart/config.php
 fi
@@ -99,21 +121,18 @@ if [[ -f /var/www/html/opencart/.htaccess.txt && ! -f /var/www/html/opencart/.ht
   cp /var/www/html/opencart/.htaccess.txt /var/www/html/opencart/.htaccess
 fi
 
-# Storage (мінімально безпечно): виносимо через symlink за межі web-root
 msg_info "Configuring storage directory"
 mkdir -p /var/www/opencart-storage
 if [[ -d /var/www/html/opencart/system/storage && ! -L /var/www/html/opencart/system/storage ]]; then
-  # переносимо вміст у зовнішній storage
   cp -a /var/www/html/opencart/system/storage/. /var/www/opencart-storage/ || true
   rm -rf /var/www/html/opencart/system/storage
   ln -s /var/www/opencart-storage /var/www/html/opencart/system/storage
 fi
 msg_ok "Storage directory configured"
 
-# Права
+# Permissions
+msg_info "Setting permissions"
 chown -R www-data:www-data /var/www/html/opencart /var/www/opencart-storage
-
-# Базові permissions як у wordpress-шаблоні 
 cd /var/www/html/opencart
 find . -type d -exec chmod 755 {} \;
 find . -type f -exec chmod 644 {} \;
@@ -121,8 +140,7 @@ find . -type f -exec chmod 644 {} \;
 # Writable paths for installer/runtime
 chmod -R 775 /var/www/opencart-storage || true
 chmod 664 /var/www/html/opencart/config.php /var/www/html/opencart/admin/config.php || true
-
-msg_ok "OpenCart deployed"
+msg_ok "Permissions set"
 
 msg_info "Configuring Apache vhost"
 cat <<'EOF' >/etc/apache2/sites-available/opencart.conf
