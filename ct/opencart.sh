@@ -4,6 +4,11 @@
 # Source: https://github.com/opencart/opencart
 # License: MIT
 
+LOG="/tmp/opencart-debug-$(date +%F_%H%M%S).log"
+exec > >(tee -a "$LOG") 2>&1
+echo "[DEBUG] Logging to $LOG"
+
+
 source <(curl -fsSL https://raw.githubusercontent.com/vikdon/opencart-proxmox/refs/heads/main/misc/build.func)
 
 APP="OpenCart"
