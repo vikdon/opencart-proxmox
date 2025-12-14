@@ -3,21 +3,6 @@
 # Source: https://github.com/opencart/opencart
 # License: MIT
 
-set -Eeuo pipefail
-
-echo "[DEBUG] entered install_script; CTID='${CTID}' IP='${IP:-}'"
-pct config "${CTID}" | sed -n '1,80p'
-pct status "${CTID}"
-
-
-
-# --- TRACE (debug) ---
-TRACE="${TRACE:-1}"
-if [[ "${TRACE}" == "1" ]]; then
-  export PS4='+ [TRACE] ${BASH_SOURCE##*/}:${LINENO}:${FUNCNAME[0]}(): '
-  set -x
-fi
-# --- /TRACE ---
 
 # If FUNCTIONS_FILE_PATH not provided by build.func, fetch install.func
 if [[ -z "${FUNCTIONS_FILE_PATH:-}" ]]; then

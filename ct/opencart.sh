@@ -46,27 +46,25 @@ update_script() {
 }
 
 # Override install step to pull install script from THIS repo
-install_script() {
-  msg_info "Installing ${APP} inside LXC (Patience)"
+# install_script() {
+#   msg_info "Installing ${APP} inside LXC (Patience)"
 
-  # Ensure CT exists before exec
-  if ! pct status "$CTID" >/dev/null 2>&1; then
-    msg_error "CT ${CTID} does not exist. Container build step failed or CTID is wrong."
-    exit 1
-  fi
+#   # Ensure CT exists before exec
+#   if ! pct status "$CTID" >/dev/null 2>&1; then
+#     msg_error "CT ${CTID} does not exist. Container build step failed or CTID is wrong."
+#     exit 1
+#   fi
 
-  # Run install script inside container
-  if pct exec "$CTID" -- env OC_VERSION="${var_oc_version}" TRACE="${TRACE}" bash -lc "curl -fsSL '${INSTALL_SCRIPT_URL}' | bash"; then
-    msg_ok "Installed ${APP}"
-  else
-    msg_error "OpenCart install failed inside CT ${CTID}"
-    exit 1
-  fi
-}
+#   # Run install script inside container
+#   if pct exec "$CTID" -- env OC_VERSION="${var_oc_version}" TRACE="${TRACE}" bash -lc "curl -fsSL '${INSTALL_SCRIPT_URL}' | bash"; then
+#     msg_ok "Installed ${APP}"
+#   else
+#     msg_error "OpenCart install failed inside CT ${CTID}"
+#     exit 1
+#   fi
+# }
 
-echo "[DEBUG] start"
 start
-echo "[DEBUG] build_container"
 build_container
 description
 
