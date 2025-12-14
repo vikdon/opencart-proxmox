@@ -4,7 +4,7 @@
 # Source: https://github.com/opencart/opencart
 # License: MIT
 
-source <(curl -fsSL https://git.community-scripts.org/community-scripts/ProxmoxVE/raw/branch/main/misc/build.func)
+source <(curl -fsSL https://raw.githubusercontent.com/vikdon/opencart-proxmox/refs/heads/main/misc/build.func)
 
 APP="OpenCart"
 
@@ -32,7 +32,7 @@ color
 catch_errors
 
 update_script() {
-  #header_info
+  header_info
   check_container_storage
   check_container_resources
 
