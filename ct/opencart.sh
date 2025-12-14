@@ -6,14 +6,6 @@
 
 source <(curl -fsSL https://git.community-scripts.org/community-scripts/ProxmoxVE/raw/branch/main/misc/build.func)
 
-# --- TRACE (debug) ---
-TRACE="${TRACE:-1}"
-if [[ "${TRACE}" == "1" ]]; then
-  export PS4='+ [TRACE] ${BASH_SOURCE##*/}:${LINENO}:${FUNCNAME[0]}(): '
-  set -x
-fi
-# --- /TRACE ---
-
 APP="OpenCart"
 
 # --- Default CT resources / OS ---
@@ -39,10 +31,8 @@ variables
 color
 catch_errors
 
-
-
 update_script() {
-  header_info
+  #header_info
   check_container_storage
   check_container_resources
 
@@ -74,13 +64,8 @@ install_script() {
   fi
 }
 
-DEBUG_STEPS=(build_container description)
-
-echo "[DEBUG] steps: ${DEBUG_STEPS[*]}"
-echo "[DEBUG] step types: build_container=$(type -t build_container) description=$(type -t description)"
-
-start "${DEBUG_STEPS[@]}"
-
+echo "[DEBUG] steps"
+start build_container description
 
 msg_ok "Completed Successfully!\n"
 echo -e "${CREATING}${GN} ${APP} setup has been successfully initialized!${CL}"
