@@ -64,8 +64,11 @@ install_script() {
   fi
 }
 
-echo "[DEBUG] steps"
-start build_container description
+echo "[DEBUG] start"
+start
+echo "[DEBUG] build_container"
+build_container
+description
 
 msg_ok "Completed Successfully!\n"
 echo -e "${CREATING}${GN} ${APP} setup has been successfully initialized!${CL}"
